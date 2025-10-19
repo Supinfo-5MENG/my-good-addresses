@@ -9,7 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mesbonnesadresses.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Cette application a besoin de votre localisation pour afficher vos adresses sur la carte.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Cette application a besoin de votre localisation pour afficher vos adresses sur la carte.",
+        "NSCameraUsageDescription": "Cette application a besoin d'accéder à votre caméra pour prendre des photos de vos adresses.",
+        "NSPhotoLibraryUsageDescription": "Cette application a besoin d'accéder à vos photos pour ajouter des images à vos adresses.",
+        "NSPhotoLibraryAddUsageDescription": "Cette application a besoin d'enregistrer des photos dans votre galerie."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,8 +26,17 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.mesbonnesadresses.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "output": "static",
@@ -37,6 +54,19 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Autoriser l'application à utiliser votre localisation."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'application accède à vos photos pour vous permettre d'ajouter des images à vos adresses.",
+          "cameraPermission": "L'application accède à votre caméra pour vous permettre de prendre des photos."
         }
       ]
     ],
