@@ -1,14 +1,10 @@
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { COLORS, SIZES } from '@/constants';
-import { useAuth } from '@/contexts/AuthContext';
 
-export default function MapScreen() {
-    const { user } = useAuth();
-
+export default function MyAddressesScreen() {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Carte</Text>
-            <Text style={styles.subtitle}>Bonjour {user?.displayName || user?.email}</Text>
+            <Text style={styles.title}>Mes Adresses</Text>
             <Text style={styles.platform}>Platform: {Platform.OS}</Text>
         </View>
     );
@@ -20,16 +16,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: COLORS.background,
-        padding: SIZES.lg,
     },
     title: {
         fontSize: SIZES.fontXl,
         fontWeight: 'bold',
-        marginBottom: SIZES.sm,
-    },
-    subtitle: {
-        fontSize: SIZES.fontMd,
-        color: COLORS.textSecondary,
         marginBottom: SIZES.md,
     },
     platform: {

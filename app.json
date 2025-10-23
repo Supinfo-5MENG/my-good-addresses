@@ -68,7 +68,8 @@
           "photosPermission": "L'application accède à vos photos pour vous permettre d'ajouter des images à vos adresses.",
           "cameraPermission": "L'application accède à votre caméra pour vous permettre de prendre des photos."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
