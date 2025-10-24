@@ -1,6 +1,6 @@
 import {ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-import {COLORS, SIZES} from '@/constants';
-import {useAuth} from "@/contexts/AuthContext";
+import {COLORS, SIZES} from '../../constants';
+import {useAuth} from "../../contexts/AuthContext";
 import {useRouter} from "expo-router";
 import {useState} from "react";
 

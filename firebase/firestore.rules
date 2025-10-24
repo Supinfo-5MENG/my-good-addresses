@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocumentOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidAddress() {
+      return request.resource.data.keys().hasAll(['name', 'location', 'isPublic', 'userId']) &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.name.size() <= 50 &&
+             request.resource.data.location is map &&
+             request.resource.data.location.keys().hasAll(['latitude', 'longitude']) &&
+             request.resource.data.isPublic is bool &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    function isValidComment() {
+      return request.resource.data.keys().hasAll(['addressId', 'text', 'userId']) &&
+             request.resource.data.text is string &&
+             request.resource.data.text.size() > 0 &&
+             request.resource.data.text.size() <= 300 &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId) && 
+                       request.resource.data.keys().hasAll(['email', 'createdAt']);
+
+      allow update: if isOwner(userId);
+
+      allow delete: if false;
+    }
+
+    match /addresses/{addressId} {
+
+      allow read: if isAuthenticated() && 
+                     (resource.data.isPublic == true || isDocumentOwner());
+      
+      // Création : par tout utilisateur authentifié avec des données valides
+      allow create: if isAuthenticated() && isValidAddress();
+      
+      // Mise à jour : seulement par le propriétaire
+      allow update: if isDocumentOwner() && isValidAddress();
+      
+      // Suppression : seulement par le propriétaire
+      allow delete: if isDocumentOwner();
+    }
+    
+    // Règles pour la collection comments
+    match /comments/{commentId} {
+      // Lecture : tous les utilisateurs authentifiés peuvent lire les commentaires
+      allow read: if isAuthenticated();
+      
+      // Création : par tout utilisateur authentifié avec des données valides
+      allow create: if isAuthenticated() && isValidComment();
+      
+      // Mise à jour : interdite (les commentaires ne peuvent pas être édités)
+      allow update: if false;
+      
+      // Suppression : seulement par le propriétaire du commentaire
+      allow delete: if isDocumentOwner();
+    }
+  }
+}

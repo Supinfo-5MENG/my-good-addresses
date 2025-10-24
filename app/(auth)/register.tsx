@@ -7,8 +7,8 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from "react-native";
-import { COLORS, SIZES } from "@/constants";
-import { useAuth } from "@/contexts/AuthContext";
+import { COLORS, SIZES } from "../../constants";
+import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
 
 export default function RegisterScreen() {

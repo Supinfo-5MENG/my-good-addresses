@@ -1,147 +1,226 @@
-import {User} from "@/types";
+import { User } from "../types";
 import {
     createUserWithEmailAndPassword,
     onAuthStateChanged,
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
-    updateProfile
-} from 'firebase/auth'
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
-import {auth, db} from '@/services/firebase/firebase'
-import {doc, getDoc, setDoc} from "@firebase/firestore";
-import {COLLECTIONS} from "@/constants";
+    updateProfile,
+    User as FirebaseUser
+} from 'firebase/auth';
+import {createContext, useCallback, useContext, useEffect, useMemo, useState, useRef, ReactNode} from "react";
+import { auth, db } from '../services/firebase/firebase';
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { COLLECTIONS } from "../constants";
 
-type AuthContactType = {
+type AuthContextType = {
     user: User | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string, displayName?: string) => Promise<void>;
     signOut: () => Promise<void>;
-    updateUserProfile: (displayName?: string, photoUrl?: string) => Promise<void>,
+    updateUserProfile: (displayName?: string, photoUrl?: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContactType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children  } : Readonly<{ children: React.ReactNode}>) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const authSubscriptionRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
-        return onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log("auth changes detected")
-            if (!firebaseUser) {
-                console.log("firebaseUser is null")
-                setUser(null);
-                setLoading(false);
-                return;
-            }
+        if (authSubscriptionRef.current) {
+            return;
+        }
 
-            const userRef = doc(db, COLLECTIONS.USERS, firebaseUser.uid);
-            const userSnap = await getDoc(userRef);
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+            console.log("Auth state changed:", firebaseUser?.uid || "null");
+            
+            try {
+                if (!firebaseUser) {
+                    setUser(null);
+                    setLoading(false);
+                    setIsInitialized(true);
+                    return;
+                }
 
-            let userData;
-            if (userSnap.exists()) {
-                userData = userSnap.data();
-            } else {
-                userData = {
-                    email: firebaseUser.email!,
-                    displayName: firebaseUser.displayName || null,
-                    photoURL: firebaseUser.photoURL || null,
-                    createdAt: new Date(),
+                const userRef = doc(db, COLLECTIONS.USERS, firebaseUser.uid);
+                const userSnap = await getDoc(userRef);
+
+                let userData;
+                if (userSnap.exists()) {
+                    userData = userSnap.data();
+                } else {
+                    userData = {
+                        email: firebaseUser.email!,
+                        displayName: firebaseUser.displayName || null,
+                        photoURL: firebaseUser.photoURL || null,
+                        createdAt: new Date(),
+                    };
+                    await setDoc(userRef, userData);
+                }
+
+                const userObject: User = {
+                    id: firebaseUser.uid,
+                    email: userData.email,
+                    displayName: userData.displayName || firebaseUser.displayName || undefined,
+                    photoURL: userData.photoURL || firebaseUser.photoURL || undefined,
+                    createdAt: userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
                 };
-                await setDoc(userRef, userData);
+
+                setUser(userObject);
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                if (firebaseUser) {
+                    setUser({
+                        id: firebaseUser.uid,
+                        email: firebaseUser.email!,
+                        displayName: firebaseUser.displayName || undefined,
+                        photoURL: firebaseUser.photoURL || undefined,
+                        createdAt: new Date(),
+                    });
+                }
+            } finally {
+                setLoading(false);
+                setIsInitialized(true);
             }
-
-            setUser({
-                id: firebaseUser.uid,
-                email: userData.email,
-                displayName: userData.displayName || firebaseUser.displayName || undefined,
-                photoURL: userData.photoURL || firebaseUser.photoURL || undefined,
-                createdAt: userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
-            });
-
-            setLoading(false);
         });
-    }, [])
+
+        authSubscriptionRef.current = unsubscribe;
+
+        return () => {
+            if (authSubscriptionRef.current) {
+                authSubscriptionRef.current();
+                authSubscriptionRef.current = null;
+            }
+        };
+    }, []);
 
     const signIn = useCallback(async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
+        try {
+            setLoading(true);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-        await new Promise<void>((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-                if (firebaseUser) {
-                    unsubscribe();
-                    resolve();
-                }
-            });
-        });
+            const userRef = doc(db, COLLECTIONS.USERS, userCredential.user.uid);
+            const userSnap = await getDoc(userRef);
+            
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                setUser({
+                    id: userCredential.user.uid,
+                    email: userData.email,
+                    displayName: userData.displayName || userCredential.user.displayName || undefined,
+                    photoURL: userData.photoURL || userCredential.user.photoURL || undefined,
+                    createdAt: userData.createdAt?.toDate?.() || userData.createdAt || new Date(),
+                });
+            }
+        } catch (error) {
+            console.error("Sign in error:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        try {
+            setLoading(true);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-        if (displayName) {
-            await updateProfile(userCredential.user, { displayName })
+            if (displayName) {
+                await updateProfile(userCredential.user, { displayName });
+            }
+
+            await setDoc(doc(db, COLLECTIONS.USERS, userCredential.user.uid), {
+                email,
+                displayName: displayName || null,
+                photoURL: null,
+                createdAt: new Date(),
+            });
+
+            setUser({
+                id: userCredential.user.uid,
+                email,
+                displayName: displayName || undefined,
+                photoURL: undefined,
+                createdAt: new Date(),
+            });
+        } catch (error) {
+            console.error("Sign up error:", error);
+            throw error;
+        } finally {
+            setLoading(false);
         }
-
-        await setDoc(doc(db, COLLECTIONS.USERS, userCredential.user.uid), {
-            email,
-            displayName: displayName || null,
-            photoURL: null,
-            createdAt: new Date(),
-        })
     }, []);
 
     const signOut = useCallback(async () => {
-        await firebaseSignOut(auth);
+        try {
+            setLoading(true);
+            await firebaseSignOut(auth);
+            setUser(null);
+        } catch (error) {
+            console.error("Sign out error:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const updateUserProfile = useCallback(async (displayName?: string, photoURL?: string) => {
         if (!auth.currentUser) {
-            return
+            throw new Error("No authenticated user");
         }
 
-        await updateProfile(auth.currentUser, {
-            displayName: displayName || auth.currentUser.displayName,
-            photoURL: photoURL || auth.currentUser.photoURL,
-        });
+        try {
+            setLoading(true);
 
-        await setDoc(doc(db, COLLECTIONS.USERS, auth.currentUser.uid), {
-            displayName: displayName || null,
-            photoURL: photoURL || null,
+            await updateProfile(auth.currentUser, {
+                displayName: displayName || auth.currentUser.displayName,
+                photoURL: photoURL || auth.currentUser.photoURL,
+            });
 
-        }, { merge: true });
+            await setDoc(doc(db, COLLECTIONS.USERS, auth.currentUser.uid), {
+                displayName: displayName || null,
+                photoURL: photoURL || null,
+            }, { merge: true });
 
-        setUser((prev) => prev
-            ? {
-                ...prev,
-                displayName: displayName || prev.displayName,
-                photoURL: photoURL || prev.photoURL,
-            }
-            : null
-        )
+            setUser((prev) => prev
+                ? {
+                    ...prev,
+                    displayName: displayName || prev.displayName,
+                    photoURL: photoURL || prev.photoURL,
+                }
+                : null
+            );
+        } catch (error) {
+            console.error("Update profile error:", error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const authContextValues = useMemo(() => ({
         user,
-        loading,
+        loading: loading || !isInitialized,
         signIn,
         signUp,
         signOut,
         updateUserProfile,
-    }), [user, loading, signIn, signUp, signOut, updateUserProfile])
+    }), [user, loading, isInitialized, signIn, signUp, signOut, updateUserProfile]);
 
     return (
         <AuthContext.Provider value={authContextValues}>
-            { children }
+            {children}
         </AuthContext.Provider>
-    )
+    );
 }
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider')
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
-}
+};

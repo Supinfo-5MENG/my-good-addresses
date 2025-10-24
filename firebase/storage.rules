@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Fonction pour vérifier si l'utilisateur est authentifié
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Fonction pour vérifier si c'est une image valide
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    }
+    
+    // Règles pour les photos de profil
+    match /profile_photos/{fileName} {
+      // Lecture : accessible à tous les utilisateurs authentifiés
+      allow read: if isAuthenticated();
+      
+      // Écriture : seulement pour l'utilisateur propriétaire et si c'est une image valide
+      // Le nom du fichier doit commencer par l'uid de l'utilisateur
+      allow write: if isAuthenticated() && 
+                      isValidImage() &&
+                      fileName.matches(request.auth.uid + '_.*');
+      
+      // Suppression : seulement par le propriétaire
+      allow delete: if isAuthenticated() &&
+                       fileName.matches(request.auth.uid + '_.*');
+    }
+    
+    // Règles pour les photos d'adresses
+    match /address_photos/{fileName} {
+      // Lecture : accessible à tous les utilisateurs authentifiés
+      allow read: if isAuthenticated();
+      
+      // Écriture : seulement par des utilisateurs authentifiés avec une image valide
+      allow write: if isAuthenticated() && isValidImage();
+      
+      // Suppression : seulement par des utilisateurs authentifiés
+      // Note : Idéalement, on devrait vérifier que l'utilisateur est propriétaire de l'adresse
+      // mais cela nécessiterait de stocker cette info dans les métadonnées du fichier
+      allow delete: if isAuthenticated();
+    }
+    
+    // Règles pour les photos de commentaires
+    match /comment_photos/{fileName} {
+      // Lecture : accessible à tous les utilisateurs authentifiés
+      allow read: if isAuthenticated();
+      
+      // Écriture : seulement par des utilisateurs authentifiés avec une image valide
+      allow write: if isAuthenticated() && isValidImage();
+      
+      // Suppression : seulement par des utilisateurs authentifiés
+      allow delete: if isAuthenticated();
+    }
+  }
+}

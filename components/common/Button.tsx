@@ -7,7 +7,7 @@ import {
     ViewStyle,
     TextStyle,
 } from 'react-native';
-import { COLORS, SIZES } from '@/constants';
+import { COLORS, SIZES } from '../../constants';
 
 interface ButtonProps {
     title: string;
@@ -76,7 +76,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
-    // Sizes
     button_small: {
         paddingHorizontal: SIZES.md,
         paddingVertical: SIZES.sm,
@@ -90,7 +89,6 @@ const styles = StyleSheet.create({
         paddingVertical: SIZES.lg,
     },
 
-    // Variants
     button_primary: {
         backgroundColor: COLORS.primary,
     },
@@ -111,7 +109,6 @@ const styles = StyleSheet.create({
         borderColor: COLORS.textTertiary,
     },
 
-    // Text
     text: {
         fontWeight: '600',
     },

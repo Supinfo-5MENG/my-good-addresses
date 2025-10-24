@@ -23,6 +23,7 @@ export interface Address {
     isPublic: boolean;
     createdAt: Date;
     updatedAt: Date;
+    color?: string;
 }
 
 export interface CreateAddressInput {

@@ -16,7 +16,6 @@ export const COLORS = {
     border: '#E5E5EA',
     separator: '#D1D1D6',
 
-    // Map colors
     markerPublic: '#34C759',
     markerPrivate: '#007AFF',
     markerMine: '#FF3B30',
