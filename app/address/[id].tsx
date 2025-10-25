@@ -20,18 +20,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
     getAddress,
     deleteAddress,
-    updateAddress,
 } from '../../services/firebase/addressService';
 import {
-    getAddressComments,
     createComment,
     deleteComment,
     subscribeToAddressComments,
 } from '../../services/firebase/commentService';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common';
-import { selectImageSource } from '../../utils/permissions';
-import {AddressMap} from "../../components/map/AddressMap";
+import {pickImage, selectImageSource} from '../../utils/permissions';
+import { AddressMap } from '../../components/map/AddressMap';
+import { convertMultipleImagesToBase64 } from '../../services/imageService';
 
 export default function AddressDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -42,10 +41,11 @@ export default function AddressDetailScreen() {
     const [comments, setComments] = useState<Comment[]>([]);
     const [loading, setLoading] = useState(true);
     const [submittingComment, setSubmittingComment] = useState(false);
-    const [deletingAddress, setDeletingAddress] = useState(false);
+    const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
     const [commentText, setCommentText] = useState('');
-    const [commentPhotos, setCommentPhotos] = useState<string[]>([]);
+    const [commentPhotoUris, setCommentPhotoUris] = useState<string[]>([]);
+    const [commentPhotosBase64, setCommentPhotosBase64] = useState<string[]>([]);
     const [showCommentForm, setShowCommentForm] = useState(false);
 
     useEffect(() => {
@@ -79,9 +79,6 @@ export default function AddressDetailScreen() {
                 return;
             }
             setAddress(addressData);
-
-            const commentsData = await getAddressComments(id);
-            setComments(commentsData);
         } catch (error) {
             console.error('Erreur lors du chargement:', error);
             Alert.alert('Erreur', 'Impossible de charger l\'adresse');
@@ -103,15 +100,12 @@ export default function AddressDetailScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            setDeletingAddress(true);
                             await deleteAddress(address.id);
                             Alert.alert('Succès', MESSAGES.ADDRESS.DELETE_SUCCESS);
                             router.back();
                         } catch (error) {
                             console.error('Erreur lors de la suppression:', error);
                             Alert.alert('Erreur', 'Impossible de supprimer l\'adresse');
-                        } finally {
-                            setDeletingAddress(false);
                         }
                     },
                 },
@@ -120,19 +114,34 @@ export default function AddressDetailScreen() {
     };
 
     const handleAddCommentPhoto = async () => {
-        if (commentPhotos.length >= 3) {
+        if (commentPhotoUris.length >= 3) {
             Alert.alert('Limite atteinte', 'Vous ne pouvez ajouter que 3 photos maximum');
             return;
         }
 
-        const uri = await selectImageSource();
-        if (uri) {
-            setCommentPhotos([...commentPhotos, uri]);
+        try {
+            const uri = await pickImage();
+            if (uri) {
+                setUploadingPhotos(true);
+
+                // Convertir immédiatement en base64
+                const base64Images = await convertMultipleImagesToBase64([uri], 400, 0.6);
+
+                setCommentPhotoUris([...commentPhotoUris, uri]);
+                setCommentPhotosBase64([...commentPhotosBase64, base64Images[0]]);
+
+                setUploadingPhotos(false);
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout de la photo:', error);
+            Alert.alert('Erreur', 'Impossible d\'ajouter la photo');
+            setUploadingPhotos(false);
         }
     };
 
     const handleRemoveCommentPhoto = (index: number) => {
-        setCommentPhotos(commentPhotos.filter((_, i) => i !== index));
+        setCommentPhotoUris(commentPhotoUris.filter((_, i) => i !== index));
+        setCommentPhotosBase64(commentPhotosBase64.filter((_, i) => i !== index));
     };
 
     const handleSubmitComment = async () => {
@@ -146,28 +155,22 @@ export default function AddressDetailScreen() {
         try {
             setSubmittingComment(true);
 
-            const commentId = await createComment(
+            await createComment(
                 user.id,
                 user.displayName,
                 user.photoURL,
                 {
                     addressId: address.id,
                     text: commentText.trim(),
-                    photos: [],
+                    photos: commentPhotosBase64, // Envoyer directement les photos en base64
                 }
             );
 
-            if (commentPhotos.length > 0) {
-                const uploadedPhotos = await uploadCommentPhotos(commentId, commentPhotos);
-            }
-
             Alert.alert('Succès', MESSAGES.COMMENT.CREATE_SUCCESS);
             setCommentText('');
-            setCommentPhotos([]);
+            setCommentPhotoUris([]);
+            setCommentPhotosBase64([]);
             setShowCommentForm(false);
-
-            const updatedComments = await getAddressComments(address.id);
-            setComments(updatedComments);
         } catch (error) {
             console.error('Erreur lors de l\'ajout du commentaire:', error);
             Alert.alert('Erreur', 'Impossible d\'ajouter le commentaire');
@@ -237,11 +240,12 @@ export default function AddressDetailScreen() {
                     style={styles.commentPhotosContainer}
                 >
                     {item.photos.map((photo, index) => (
-                        <Image
-                            key={index}
-                            source={{ uri: photo }}
-                            style={styles.commentPhoto}
-                        />
+                        <TouchableOpacity key={index} activeOpacity={0.9}>
+                            <Image
+                                source={{ uri: photo }}
+                                style={styles.commentPhoto}
+                            />
+                        </TouchableOpacity>
                     ))}
                 </ScrollView>
             )}
@@ -363,7 +367,7 @@ export default function AddressDetailScreen() {
                                 showsHorizontalScrollIndicator={false}
                                 style={styles.commentPhotosPreview}
                             >
-                                {commentPhotos.map((photo, index) => (
+                                {commentPhotosBase64.map((photo, index) => (
                                     <View key={index} style={styles.photoPreview}>
                                         <Image source={{ uri: photo }} style={styles.photoPreviewImage} />
                                         <TouchableOpacity
@@ -374,12 +378,17 @@ export default function AddressDetailScreen() {
                                         </TouchableOpacity>
                                     </View>
                                 ))}
-                                {commentPhotos.length < 3 && (
+                                {commentPhotosBase64.length < 3 && (
                                     <TouchableOpacity
                                         style={styles.addPhotoButton}
                                         onPress={handleAddCommentPhoto}
+                                        disabled={uploadingPhotos}
                                     >
-                                        <Ionicons name="camera-outline" size={24} color={COLORS.primary} />
+                                        {uploadingPhotos ? (
+                                            <ActivityIndicator size="small" color={COLORS.primary} />
+                                        ) : (
+                                            <Ionicons name="camera-outline" size={24} color={COLORS.primary} />
+                                        )}
                                     </TouchableOpacity>
                                 )}
                             </ScrollView>
@@ -390,7 +399,8 @@ export default function AddressDetailScreen() {
                                     onPress={() => {
                                         setShowCommentForm(false);
                                         setCommentText('');
-                                        setCommentPhotos([]);
+                                        setCommentPhotoUris([]);
+                                        setCommentPhotosBase64([]);
                                     }}
                                     variant="outline"
                                     size="small"
@@ -400,7 +410,7 @@ export default function AddressDetailScreen() {
                                     title="Publier"
                                     onPress={handleSubmitComment}
                                     loading={submittingComment}
-                                    disabled={!commentText.trim() || submittingComment}
+                                    disabled={!commentText.trim() || submittingComment || uploadingPhotos}
                                     size="small"
                                     style={styles.commentFormButton}
                                 />
@@ -468,9 +478,6 @@ const styles = StyleSheet.create({
         margin: SIZES.lg,
         borderRadius: SIZES.radiusMd,
         overflow: 'hidden',
-    },
-    map: {
-        flex: 1,
     },
     infoContainer: {
         padding: SIZES.lg,

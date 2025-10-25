@@ -16,29 +16,17 @@ import {
 import { db } from './firebase';
 import { Address, CreateAddressInput, UpdateAddressInput } from '../../types';
 import { COLLECTIONS } from '../../constants';
-import { compressImageToSize } from '../imageService';
 
 export const createAddress = async (
     userId: string,
-    input: CreateAddressInput,
-    photoUri?: string
+    input: CreateAddressInput
 ): Promise<string> => {
     try {
         const addressRef = doc(collection(db, COLLECTIONS.ADDRESSES));
 
-        let photoBase64 = null;
-        if (photoUri) {
-            try {
-                photoBase64 = await compressImageToSize(photoUri, 400);
-            } catch (error) {
-                console.error('Erreur lors de la compression de l\'image:', error);
-            }
-        }
-
         const addressData = {
             ...input,
             userId,
-            photoURL: photoBase64,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
@@ -53,8 +41,7 @@ export const createAddress = async (
 
 export const updateAddress = async (
     addressId: string,
-    updates: UpdateAddressInput,
-    newPhotoUri?: string
+    updates: UpdateAddressInput
 ): Promise<void> => {
     try {
         const addressRef = doc(db, COLLECTIONS.ADDRESSES, addressId);
@@ -63,14 +50,6 @@ export const updateAddress = async (
             ...updates,
             updatedAt: serverTimestamp(),
         };
-
-        if (newPhotoUri) {
-            try {
-                updateData.photoURL = await compressImageToSize(newPhotoUri, 400);
-            } catch (error) {
-                console.error('Erreur lors de la compression de l\'image:', error);
-            }
-        }
 
         await updateDoc(addressRef, updateData);
     } catch (error) {
@@ -82,7 +61,14 @@ export const updateAddress = async (
 export const deleteAddress = async (addressId: string): Promise<void> => {
     try {
         const addressRef = doc(db, COLLECTIONS.ADDRESSES, addressId);
-        await deleteDoc(addressRef);
+        const commentsQuery = query(
+            collection(db, COLLECTIONS.COMMENTS),
+            where('addressId', '==', addressId)
+        );
+        const commentDocs = await getDocs(commentsQuery);
+
+        const deletePromises = commentDocs.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all([...deletePromises, deleteDoc(addressRef)]);
     } catch (error) {
         console.error('Erreur lors de la suppression de l\'adresse:', error);
         throw error;
@@ -182,6 +168,8 @@ export const subscribeToPublicAddresses = (
         });
 
         callback(addresses);
+    }, (error) => {
+        console.error('Erreur lors de l\'écoute des adresses publiques:', error);
     });
 };
 
@@ -189,9 +177,6 @@ export const subscribeToUserAddresses = (
     userId: string,
     callback: (addresses: Address[]) => void
 ): Unsubscribe => {
-
-    console.log("pass here")
-    console.log("userId:", userId)
     const q = query(
         collection(db, COLLECTIONS.ADDRESSES),
         where('userId', '==', userId),
@@ -210,5 +195,21 @@ export const subscribeToUserAddresses = (
         });
 
         callback(addresses);
+    }, (error) => {
+        console.error('Erreur lors de l\'écoute des adresses utilisateur:', error);
     });
+};
+
+export const getUserAddressesCount = async (userId: string): Promise<number> => {
+    try {
+        const q = query(
+            collection(db, COLLECTIONS.ADDRESSES),
+            where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.size;
+    } catch (error) {
+        console.error('Erreur lors du comptage des adresses:', error);
+        return 0;
+    }
 };

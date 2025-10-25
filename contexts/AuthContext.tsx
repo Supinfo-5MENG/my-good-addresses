@@ -5,6 +5,9 @@ import {
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
     updateProfile,
+    updatePassword,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
     User as FirebaseUser
 } from 'firebase/auth';
 import {createContext, useCallback, useContext, useEffect, useMemo, useState, useRef, ReactNode} from "react";
@@ -19,6 +22,7 @@ type AuthContextType = {
     signUp: (email: string, password: string, displayName?: string) => Promise<void>;
     signOut: () => Promise<void>;
     updateUserProfile: (displayName?: string, photoUrl?: string) => Promise<void>;
+    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,7 +40,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
             console.log("Auth state changed:", firebaseUser?.uid || "null");
-            
+
             try {
                 if (!firebaseUser) {
                     setUser(null);
@@ -104,7 +108,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
             const userRef = doc(db, COLLECTIONS.USERS, userCredential.user.uid);
             const userSnap = await getDoc(userRef);
-            
+
             if (userSnap.exists()) {
                 const userData = userSnap.data();
                 setUser({
@@ -201,6 +205,40 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         }
     }, []);
 
+    const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+        if (!auth.currentUser || !user?.email) {
+            throw new Error("No authenticated user");
+        }
+
+        try {
+            setLoading(true);
+
+            // Ré-authentifier l'utilisateur d'abord
+            const credential = EmailAuthProvider.credential(
+                user.email,
+                currentPassword
+            );
+
+            await reauthenticateWithCredential(auth.currentUser, credential);
+
+            // Puis changer le mot de passe
+            await updatePassword(auth.currentUser, newPassword);
+
+            console.log("Password changed successfully");
+        } catch (error: any) {
+            console.error("Change password error:", error);
+            if (error.code === 'auth/wrong-password') {
+                throw new Error('Le mot de passe actuel est incorrect');
+            } else if (error.code === 'auth/weak-password') {
+                throw new Error('Le nouveau mot de passe est trop faible (6 caractères minimum)');
+            } else {
+                throw error;
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
     const authContextValues = useMemo(() => ({
         user,
         loading: loading || !isInitialized,
@@ -208,7 +246,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
         signUp,
         signOut,
         updateUserProfile,
-    }), [user, loading, isInitialized, signIn, signUp, signOut, updateUserProfile]);
+        changePassword,
+    }), [user, loading, isInitialized, signIn, signUp, signOut, updateUserProfile, changePassword]);
 
     return (
         <AuthContext.Provider value={authContextValues}>

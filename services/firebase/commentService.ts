@@ -14,34 +14,22 @@ import {
 import { db } from './firebase';
 import { Comment, CreateCommentInput } from '../../types';
 import { COLLECTIONS } from '../../constants';
-import { convertMultipleImagesToBase64 } from '../imageService';
 
 export const createComment = async (
     userId: string,
     userDisplayName: string | undefined,
     userPhotoURL: string | undefined,
-    input: CreateCommentInput,
-    photoUris?: string[]
+    input: CreateCommentInput
 ): Promise<string> => {
     try {
         const commentRef = doc(collection(db, COLLECTIONS.COMMENTS));
-
-        let photosBase64: string[] = [];
-        if (photoUris && photoUris.length > 0) {
-            try {
-                const limitedUris = photoUris.slice(0, 3);
-                photosBase64 = await convertMultipleImagesToBase64(limitedUris, 400, 0.5);
-            } catch (error) {
-                console.error('Erreur lors de la conversion des photos:', error);
-            }
-        }
 
         const commentData = {
             ...input,
             userId,
             userDisplayName: userDisplayName || 'Utilisateur anonyme',
             userPhotoURL: userPhotoURL || null,
-            photos: photosBase64,
+            photos: input.photos || [],
             createdAt: serverTimestamp(),
         };
 
@@ -110,6 +98,8 @@ export const subscribeToAddressComments = (
         });
 
         callback(comments);
+    }, (error) => {
+        console.error('Erreur lors de l\'écoute des commentaires:', error);
     });
 };
 
@@ -135,5 +125,19 @@ export const getUserComments = async (userId: string): Promise<Comment[]> => {
     } catch (error) {
         console.error('Erreur lors de la récupération des commentaires:', error);
         throw error;
+    }
+};
+
+export const getUserCommentsCount = async (userId: string): Promise<number> => {
+    try {
+        const q = query(
+            collection(db, COLLECTIONS.COMMENTS),
+            where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.size;
+    } catch (error) {
+        console.error('Erreur lors du comptage des commentaires:', error);
+        return 0;
     }
 };

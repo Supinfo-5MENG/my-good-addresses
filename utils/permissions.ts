@@ -2,10 +2,6 @@ import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import {Alert} from 'react-native';
 
-/**
- * Demande la permission de localisation
- * @returns true si accordée, false sinon
- */
 export const requestLocationPermission = async (): Promise<boolean> => {
     try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -26,10 +22,6 @@ export const requestLocationPermission = async (): Promise<boolean> => {
     }
 };
 
-/**
- * Obtient la localisation actuelle de l'utilisateur
- * @returns Les coordonnées ou null
- */
 export const getCurrentLocation = async (): Promise<Location.LocationObjectCoords | null> => {
     try {
         const hasPermission = await requestLocationPermission();
@@ -54,10 +46,6 @@ export const getCurrentLocation = async (): Promise<Location.LocationObjectCoord
     }
 };
 
-/**
- * Demande la permission de la caméra
- * @returns true si accordée, false sinon
- */
 export const requestCameraPermission = async (): Promise<boolean> => {
     try {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -78,10 +66,6 @@ export const requestCameraPermission = async (): Promise<boolean> => {
     }
 };
 
-/**
- * Demande la permission d'accès à la galerie photos
- * @returns true si accordée, false sinon
- */
 export const requestMediaLibraryPermission = async (): Promise<boolean> => {
     try {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -102,10 +86,6 @@ export const requestMediaLibraryPermission = async (): Promise<boolean> => {
     }
 };
 
-/**
- * Ouvre la caméra pour prendre une photo
- * @returns L'URI de la photo ou null
- */
 export const takePicture = async (): Promise<string | null> => {
     try {
         const hasPermission = await requestCameraPermission();
@@ -133,10 +113,6 @@ export const takePicture = async (): Promise<string | null> => {
     }
 };
 
-/**
- * Ouvre la galerie pour sélectionner une photo
- * @returns L'URI de la photo ou null
- */
 export const pickImage = async (): Promise<string | null> => {
     try {
         const hasPermission = await requestMediaLibraryPermission();
@@ -164,10 +140,6 @@ export const pickImage = async (): Promise<string | null> => {
     }
 };
 
-/**
- * Affiche un menu pour choisir entre caméra et galerie
- * @returns L'URI de la photo ou null
- */
 export const selectImageSource = async (): Promise<string | null> => {
     return new Promise((resolve) => {
         Alert.alert(

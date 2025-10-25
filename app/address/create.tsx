@@ -15,14 +15,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
-import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SIZES, MAP_CONFIG, MESSAGES } from '../../constants';
 import { Button } from '../../components/common';
 import { useAuth } from '../../contexts/AuthContext';
-import { createAddress, updateAddress } from '../../services/firebase/addressService';
+import { createAddress } from '../../services/firebase/addressService';
 import { CreateAddressInput, Address } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
-import { selectImageSource } from '../../utils/permissions';
+import {pickImage, selectImageSource} from '../../utils/permissions';
+import { compressImageToSize } from '../../services/imageService';
 import { AddressMap } from '../../components/map/AddressMap';
 
 export default function CreateAddressScreen() {
@@ -32,9 +32,10 @@ export default function CreateAddressScreen() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [isPublic, setIsPublic] = useState(false);
-    const [photoUri, setPhotoUri] = useState<string | null>(null);
+    const [photoBase64, setPhotoBase64] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [mapLoading, setMapLoading] = useState(true);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     const [selectedLocation, setSelectedLocation] = useState<{
         latitude: number;
@@ -93,11 +94,25 @@ export default function CreateAddressScreen() {
     };
 
     const handleSelectImage = async () => {
-        const uri = await selectImageSource();
-        if (uri) setPhotoUri(uri);
+        try {
+            setUploadingPhoto(true);
+            const uri = await pickImage();
+
+            if (uri) {
+                const base64Image = await compressImageToSize(uri, 400);
+                setPhotoBase64(base64Image);
+            }
+        } catch (error) {
+            console.error('Erreur lors du traitement de l\'image:', error);
+            Alert.alert('Erreur', 'Impossible de traiter l\'image. Veuillez réessayer.');
+        } finally {
+            setUploadingPhoto(false);
+        }
     };
 
-    const handleRemoveImage = () => setPhotoUri(null);
+    const handleRemoveImage = () => {
+        setPhotoBase64(null);
+    };
 
     const handleSubmit = async () => {
         if (!name.trim()) {
@@ -121,14 +136,10 @@ export default function CreateAddressScreen() {
                 description: description.trim(),
                 location: selectedLocation,
                 isPublic,
+                photoURL: photoBase64,
             };
 
             const addressId = await createAddress(user.id, addressInput);
-
-            if (photoUri) {
-                // const photoURL = await uploadAddressPhoto(addressId, photoUri);
-                // await updateAddress(addressId, { photoURL });
-            }
 
             Alert.alert('Succès', MESSAGES.ADDRESS.CREATE_SUCCESS);
             router.back();
@@ -178,6 +189,8 @@ export default function CreateAddressScreen() {
                                             location: selectedLocation,
                                             isPublic: false,
                                             userId: user?.id ?? 'unknown',
+                                            createdAt: new Date(),
+                                            updatedAt: new Date(),
                                         } as Address]
                                         : []
                                 }
@@ -222,9 +235,14 @@ export default function CreateAddressScreen() {
                 {/* Photo */}
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Photo</Text>
-                    {photoUri ? (
+                    {uploadingPhoto ? (
+                        <View style={styles.loadingImageContainer}>
+                            <ActivityIndicator size="large" color={COLORS.primary} />
+                            <Text style={styles.loadingText}>Traitement de l'image...</Text>
+                        </View>
+                    ) : photoBase64 ? (
                         <View style={styles.imageContainer}>
-                            <Image source={{ uri: photoUri }} style={styles.image} />
+                            <Image source={{ uri: photoBase64 }} style={styles.image} />
                             <TouchableOpacity
                                 style={styles.removeImageButton}
                                 onPress={handleRemoveImage}
@@ -271,7 +289,7 @@ export default function CreateAddressScreen() {
                         title="Créer"
                         onPress={handleSubmit}
                         loading={loading}
-                        disabled={loading || !name.trim() || !selectedLocation}
+                        disabled={loading || !name.trim() || !selectedLocation || uploadingPhoto}
                         style={styles.button}
                     />
                 </View>
@@ -308,6 +326,7 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: SIZES.radiusMd,
         marginTop: SIZES.sm,
+        overflow: 'hidden',
     },
     mapLoading: {
         height: 200,
@@ -383,6 +402,18 @@ const styles = StyleSheet.create({
         marginLeft: SIZES.sm,
         fontSize: SIZES.fontMd,
         color: COLORS.primary,
+    },
+    loadingImageContainer: {
+        height: 200,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.backgroundSecondary,
+        borderRadius: SIZES.radiusMd,
+    },
+    loadingText: {
+        marginTop: SIZES.sm,
+        fontSize: SIZES.fontSm,
+        color: COLORS.textSecondary,
     },
     switchContainer: {
         flexDirection: 'row',
