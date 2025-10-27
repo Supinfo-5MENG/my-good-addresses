@@ -1,290 +1,230 @@
-# 📍 Mes Bonnes Adresses
+# My Good Addresses
 
-Une application mobile React Native avec Expo permettant aux utilisateurs de sauvegarder, gérer et partager leurs adresses favorites.
+Application mobile / web pour partager, sauvegarder et découvrir des adresses (restaurants, lieux, points d'intérêt). Projet basé sur Expo + React Native + Firebase et pensé pour être multi-plateforme (iOS / Android / Web).
 
-## 🎯 Fonctionnalités
+## Table des matières
 
-### Gestion d'utilisateurs (✅ 25 pts)
-- ✅ Projet Firebase Sécurisé avec règles de sécurité Firestore et Storage
-- ✅ Inscription avec email et mot de passe
-- ✅ Connexion/Déconnexion sécurisée
-- ✅ Gestion de photo de profil avec upload vers Firebase Storage
+- [Présentation](#Présentation)
+- [Fonctionnalités](#Fonctionnalités)
+- [Stack technique](#stack-technique)
+- [Organisation du dépôt](#organisation-du-dépôt)
+- [Installation & configuration](#installation--configuration)
+    - [Prérequis](#prérequis)
+    - [Variables d'environnement](#variables-denvironnement)
+- [Lancement en développement](#lancement-en-développement)
+    - [Mobile (Expo)](#mobile-expo-go)
+    - [Web](#web)
+- [Tests](#tests)
+    - [Tests unitaires / d'intégration (Jest)](#tests-unitaires--composants-jest)
+    - [Tests E2E (Detox)](#tests-e2e-detox)
+- [Storybook](#storybook)
+- [Règles Firebase](#règles-firebase)
+- [Architecture / Composants clés](#architecture--composants-clés)
+    - [Auth (AuthContext)](#authcontext-contextsauthcontexttsx)
+    - [Cartographie (AddressMap, MobileMap, WebMap)](#cartographie-componentsmap)
+    - [Services Firebase (addressService, commentService, firebase)](#services-firebase-servicesfirebase)
+    - [Composants UI](#composants-ui)
+    - [Images & Optimisations](#images--optimisation)
+- [Modèles de données (types)](#modèles-de-données-types)
+- [Bonnes pratiques](#bonnes-pratiques)
+- [Déploiement rapide (notes)](#déploiement)
 
-### Carte et Localisation (✅ 15 pts)
-- ✅ Affichage d'une carte MapView (Google Maps sur Android, Apple Maps sur iOS)
-- ✅ Centrage automatique sur la position de l'utilisateur
-- ✅ Marqueurs colorés selon le type d'adresse :
-  - 🔴 Rouge : Mes adresses
-  - 🟢 Vert : Adresses publiques
-  - 🔵 Bleu : Adresses privées
+## Présentation
 
-### Gestion des Adresses (✅ 30 pts)
-- ✅ Création d'adresses avec :
-  - Option Privé/Publique
-  - Nom, Description et Photo
-  - Sélection de la position sur la carte
-- ✅ Suppression d'adresses
-- ✅ Visualisation :
-  - Mes adresses (publiques et privées)
-  - Adresses publiques des autres utilisateurs
+My Good Addresses permet aux utilisateurs d'ajouter des adresses (avec photo et description), de choisir si elles sont publiques ou privées, de parcourir les adresses publiques partagées par la communauté, de commenter et d'ajouter des photos aux commentaires. L'application prend en charge la navigation par onglets, l'authentification (email/mot de passe), et une carte interactive (Leaflet via WebView).
 
-### Commentaires et Avis (✅ 10 pts)
-- ✅ Système de commentaires sur les adresses
-- ✅ Upload de photos multiples par commentaire (max 3)
-- ✅ Affichage en temps réel des commentaires
-- ✅ Suppression de ses propres commentaires
+## Fonctionnalités
 
-### Tests et Qualité (✅ 25 pts)
-- ✅ Tests unitaires pour l'authentification et les services
-- ✅ Tests E2E avec Detox
-- ✅ Storybook pour les composants UI
+- Authentification (inscription, connexion, déconnexion)
+- Profil utilisateur (nom, photo)
+- Création / édition / suppression d'adresses
+- Upload/optimisation d'images (profil, adresse, commentaires)
+- Adresses publiques / privées
+- Filtrage / recherche d'adresses publiques
+- Carte interactive (web & mobile) avec marqueurs personnalisés
+- Commentaires avec images
+- Règles de sécurité Firebase pour Firestore & Storage
+- Tests unitaires et E2E (Jest, Detox)
+- Storybook pour composants UI
 
-## 🚀 Installation
+## Stack technique
+
+- Framework : React Native + Expo (expo-router)
+- Backend-as-a-service : Firebase (Authentication, Firestore, Storage)
+- Cartes : Leaflet (via WebView pour mobile et iframe pour web)
+- Tests : Jest (jest-expo), @testing-library/react-native, Detox (E2E)
+- Storybook : @storybook/react-native
+- Outils : TypeScript, ESLint
+
+## Organisation du dépôt
+
+- app/ — pages / routes (expo-router)
+    - (auth)/login.tsx, register.tsx
+    - (tabs)/index.tsx, my-addresses.tsx, public-addresses.tsx, profile.tsx
+    - address/[id].tsx, address/create.tsx
+- components/
+    - common/ — Button, Input, etc.
+    - map/ — AddressMap, MobileMap, WebMap
+    - haptic-tab.tsx
+- contexts/ — AuthContext.tsx
+- services/
+    - firebase/ — firebase.ts, addressService.ts, commentService.ts
+    - imageService.ts
+- constants/ — index.ts, theme.ts
+- firebase/ — firestore.rules, storage.rules
+- utils/ — permissions.ts
+- types/ — types/index.ts
+- __tests__/ — tests unitaires
+- e2e/ — tests Detox
+
+## Installation & configuration
 
 ### Prérequis
-- Node.js LTS (20.18.0)
-- npm ou yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Pour iOS : Xcode et simulateur iOS
-- Pour Android : Android Studio et émulateur Android
 
-### Installation des dépendances
+- Node.js (recommandé LTS)
+- Yarn ou npm
+- Expo CLI : npm i -g expo-cli (ou utiliser npx expo)
+- Un projet Firebase (Authentication, Firestore, Storage) configuré
+- (Pour iOS/Android natif) Xcode / Android Studio pour exécuter sur simulateurs
 
-```bash
-# Cloner le repository
-git clone https://github.com/your-username/my-good-addresses.git
-cd my-good-addresses
+### Variables d'environnement
 
-# Installer les dépendances
-npm install
+Copiez `.env.example` en `.env` ou configurez les variables d'environnement utilisées dans `services/firebase/firebase.ts`. Les noms exposés (ex : EXPO_PUBLIC_API_KEY, EXPO_PUBLIC_AUTH_DOMAIN...) sont attendus par le code.
 
-# Pour iOS, installer les pods
-cd ios && pod install && cd ..
-```
+Exemple (.env) — variables attendues :
+- EXPO_PUBLIC_API_KEY
+- EXPO_PUBLIC_AUTH_DOMAIN
+- EXPO_PUBLIC_PROJECT_ID
+- EXPO_PUBLIC_STORAGE_BUCKET
+- EXPO_PUBLIC_MESSAGING_SENDER_ID
+- EXPO_PUBLIC_APP_ID
+- EXPO_PUBLIC_MEASUREMENT_ID
 
-### Configuration Firebase
+> Le fichier `.env.example` fournit un modèle. Ne committez pas vos clés privées.
 
-1. Créer un projet Firebase sur [Firebase Console](https://console.firebase.google.com)
+## Lancement en développement
 
-2. Activer les services suivants :
-   - Authentication (Email/Password)
-   - Firestore Database
-   - Storage
+1. Installer les dépendances
+    - npm install
+    - ou yarn
 
-3. Copier la configuration Firebase et remplacer dans `services/firebase/firebase.ts`
+2. Démarrer Expo
+    - npm run start
+    - ou yarn start
 
-4. Appliquer les règles de sécurité :
-   - Firestore : Copier le contenu de `firebase/firestore.rules`
-   - Storage : Copier le contenu de `firebase/storage.rules`
+### Mobile (Expo Go)
+- Lancez `expo start` puis scannez le QR code avec Expo Go.
 
-### Configuration des clés API
+### iOS / Android (simulation ou build local)
+- iOS : npm run ios (nécessite Xcode)
+- Android : npm run android (nécessite Android Studio + émulateur)
 
-Pour la carte Google Maps sur Android :
-1. Obtenir une clé API Google Maps
-2. Ajouter dans `android/app/src/main/AndroidManifest.xml` :
-```xml
-<meta-data
-  android:name="com.google.android.geo.API_KEY"
-  android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
-```
+### Web
+- npm run web
+- L'application s'exécute dans le navigateur (WebMap utilise iframe/Leaflet).
 
-## 🏃‍♂️ Lancement de l'application
+## Tests
 
-```bash
-# Démarrer Metro Bundler
-npx expo start
+### Tests unitaires / composants (Jest)
 
-# Pour iOS
-npx expo run:ios
+- Lancer tous les tests :
+    - npm run test
+- Lancer en mode watch :
+    - npm run test:watch
 
-# Pour Android
-npx expo run:android
+Les tests utilisent `jest-expo` comme preset et `@testing-library/react-native`.
 
-# Pour le web
-npx expo start --web
-```
+### Tests E2E (Detox)
 
-## 🧪 Tests
+- Configuration Detox : voir `package.json` (script `test:e2e`).
+- Exemple :
+    - npm run test:e2e
 
-### Tests unitaires
-```bash
-# Lancer tous les tests
-npm test
+Detox nécessite des configurations supplémentaires (simulators, builds natives). Vérifier la documentation Detox et les configurations CI pour l'exécution.
 
-# Mode watch
-npm run test:watch
+## Storybook
 
-# Avec coverage
-npm run test:coverage
-```
+- Lancer Storybook :
+    - npm run storybook
 
-### Tests E2E
-```bash
-# Build pour les tests iOS
-detox build --configuration ios
+Permet d'inspecter les composants UI (`components/common`).
 
-# Lancer les tests iOS
-detox test --configuration ios
+## Règles Firebase
 
-# Build pour les tests Android
-detox build --configuration android
+Les règles Firestore et Storage essentielles sont fournies dans :
+- `firebase/firestore.rules`
+- `firebase/storage.rules`
 
-# Lancer les tests Android
-detox test --configuration android
-```
+Résumé des règles importantes :
+- Seuls les utilisateurs authentifiés peuvent créer des adresses / commentaires.
+- Les mises à jour / suppressions d'adresses et commentaires sont réservées au propriétaire (userId doit correspondre à request.auth.uid).
+- Validation côté règle pour les champs essentiels (nom, location pour les adresses ; text pour les commentaires).
+- Storage : vérification du contentType image/* et taille max (5 MB) pour les uploads.
 
-### Storybook
-```bash
-# Lancer Storybook
-npm run storybook
+Vérifiez et adaptez les règles à vos besoins de production (ex : vérification de métadonnées pour les images d'adresse si nécessaire).
 
-# Ouvrir dans le navigateur
-# http://localhost:6006
-```
+## Architecture & composants clés
 
-## 📱 Structure du projet
+### AuthContext (contexts/AuthContext.tsx)
+- Fournit le contexte d'authentification pour l'application :
+    - user, loading
+    - signIn, signUp, signOut
+    - updateUserProfile, changePassword
+- Écoute onAuthStateChanged pour synchroniser l'état local avec Firebase Auth.
+- Stocke des données utilisateur basiques dans la collection `users` de Firestore.
 
-```
-my-good-addresses/
-├── app/                        # Routes et écrans (Expo Router)
-│   ├── (auth)/                # Écrans d'authentification
-│   │   ├── login.tsx
-│   │   └── register.tsx
-│   ├── (tabs)/                # Navigation par tabs
-│   │   ├── index.tsx          # Carte principale
-│   │   ├── my-addresses.tsx   # Mes adresses
-│   │   ├── public-addresses.tsx # Découverte
-│   │   └── profile.tsx        # Profil utilisateur
-│   └── address/               # Gestion des adresses
-│       ├── [id].tsx           # Détail d'une adresse
-│       └── create.tsx         # Création d'adresse
-├── components/                 # Composants réutilisables
-│   ├── common/                # Composants génériques
-│   │   ├── Button.tsx
-│   │   └── Input.tsx
-│   └── map/                   # Composants carte
-│       └── AddressMap.tsx
-├── services/                  # Services et API
-│   └── firebase/
-│       ├── firebase.ts        # Configuration Firebase
-│       ├── addressService.ts  # Service des adresses
-│       └── commentService.ts  # Service des commentaires
-├── contexts/                  # Contextes React
-│   └── AuthContext.tsx        # Contexte d'authentification
-├── constants/                 # Constantes de l'app
-│   └── index.ts              # Couleurs, tailles, messages
-├── types/                     # Types TypeScript
-│   └── index.ts
-├── utils/                     # Fonctions utilitaires
-│   └── permissions.ts         # Gestion des permissions
-├── __tests__/                 # Tests unitaires
-├── e2e/                       # Tests E2E
-└── firebase/                  # Règles de sécurité Firebase
-```
+### Services Firebase (services/firebase)
+- `firebase.ts` : initialise Firebase (auth, firestore).
+- `addressService.ts` :
+    - createAddress, updateAddress, deleteAddress
+    - getAddress, getUserAddresses, getPublicAddresses
+    - subscribeToUserAddresses, subscribeToPublicAddresses (onSnapshot)
+- `commentService.ts` :
+    - createComment, deleteComment, getAddressComments, subscribeToAddressComments
+      Ces modules sont le point d'entrée pour toutes les opérations Firestore.
 
-## 🔒 Sécurité
+### Cartographie (components/map)
+- `AddressMap.tsx` : wrapper qui sélectionne `MobileMap` ou `WebMap` selon `Platform.OS`.
+- `MobileMap.tsx` : WebView qui charge une page HTML Leaflet et communique via postMessage pour :
+    - mettre à jour marqueurs
+    - recevoir événements (click marker, click map)
+- `WebMap.tsx` : iframe qui contient un document HTML Leaflet et communique via postMessage / window.postMessage.
+- Les marqueurs héritent d'une couleur selon provenance (publique/privée/propre).
 
-### Règles Firestore
-- Les utilisateurs peuvent uniquement lire/modifier leurs propres données
-- Les adresses publiques sont visibles par tous les utilisateurs authentifiés
-- Les adresses privées ne sont visibles que par leur propriétaire
-- Les commentaires peuvent être supprimés uniquement par leur auteur
+### Composants UI
+- `components/common/Button.tsx`, `Input.tsx` : composants réutilisables stylés.
+- `components/haptic-tab.tsx` : bouton d'onglet personnalisé avec retour haptique sur iOS.
 
-### Règles Storage
-- Les photos de profil peuvent être modifiées uniquement par le propriétaire
-- Les photos d'adresses et de commentaires nécessitent une authentification
-- Taille maximale des images : 5MB
-- Types acceptés : image/*
+### Images & optimisation
+- `services/imageService.ts` :
+    - conversion en base64, compression (expo-image-manipulator)
+    - fonctions utilitaires : taille base64, validation, extension MIME
+- `utils/permissions.ts` : demandes de permissions (localisation, caméra, galerie).
 
-## 🎨 Personnalisation
+## Modèles de données (types)
 
-### Couleurs et thème
-Modifier les constantes dans `constants/index.ts` :
+Fichier : `types/index.ts`
 
-```typescript
-export const COLORS = {
-    primary: '#007AFF',
-    secondary: '#5856D6',
-    success: '#34C759',
-    // ...
-};
-```
+Principaux type:
+- User
+    - id, email, displayName?, photoURL?, createdAt: Date
 
-### Tailles et espacements
-```typescript
-export const SIZES = {
-    fontXl: 24,
-    fontLg: 18,
-    radiusMd: 8,
-    // ...
-};
-```
+- Address
+    - id, userId, name, description, photoURL?, location (latitude, longitude), isPublic (bool), createdAt, updatedAt
 
-## 📝 Barème d'évaluation
+- Comment
+    - id, addressId, userId, userDisplayName?, userPhotoURL?, text, photos[], createdAt
 
-| Fonctionnalité | Points | Status |
-|----------------|--------|--------|
-| **Gestion d'utilisateurs** | **25** | ✅ |
-| - Firebase Sécurisé | 5 | ✅ |
-| - Inscription | 5 | ✅ |
-| - Connexion | 5 | ✅ |
-| - Déconnexion | 5 | ✅ |
-| - Photo de profil | 5 | ✅ |
-| **MapView** | **15** | ✅ |
-| - Affichage carte | 10 | ✅ |
-| - Centrage auto | 5 | ✅ |
-| **Création d'adresse** | **25** | ✅ |
-| - Option Privé/Public | 10 | ✅ |
-| - Nom/Photo/Description | 15 | ✅ |
-| **Suppression** | **5** | ✅ |
-| **Visualisation** | **20** | ✅ |
-| - Mes adresses | 10 | ✅ |
-| - Adresses publiques | 10 | ✅ |
-| **Commentaires** | **10** | ✅ |
-| **Tests** | **25** | ✅ |
-| - Tests unitaires | 10 | ✅ |
-| - Tests E2E | 10 | ✅ |
-| - Storybook | 5 | ✅ |
-| **TOTAL** | **125** | **✅** |
+## Bonnes pratiques
 
-## 🐛 Résolution des problèmes
+- Ne pas stocker d'images brutes non optimisées : utiliser `imageService.compressImageToSize`.
+- Vérifier les permissions avant d'utiliser la localisation / caméra / galerie (utils/permissions).
+- Pour la carte mobile, la communication entre WebView et RN peut être sensible : logger les messages postés pour debug.
+- Si l'authentification ne synchronise pas l'utilisateur, vérifier les variables Firebase dans `.env` et les règles Firestore.
+- Pour debugging Firebase : activer la console et vérifier les requêtes échouées (erreurs de règles, permissions).
 
-### Erreur "Component auth has not been registered yet" sur web
-- Solution implémentée : Utiliser `getAuth()` au lieu de `initializeAuth()` sur web
-- Fichier corrigé : `services/firebase/firebase.ts`
+## Déploiement
 
-### Double authentification lors de la déconnexion
-- Solution implémentée : Gestion améliorée de l'état avec `isInitialized`
-- Fichier corrigé : `contexts/AuthContext.tsx`
-
-### Permissions refusées sur iOS/Android
-- Vérifier les permissions dans `app.json`
-- Pour iOS : Vérifier Info.plist
-- Pour Android : Vérifier AndroidManifest.xml
-
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créer une branche (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
-## 👥 Équipe
-
-- Groupe de 2-3 étudiants
-- Développé avec React Native, Expo et Firebase
-- Tests avec Jest, Detox et Storybook
-
-## 📞 Support
-
-Pour toute question ou problème :
-- Ouvrir une issue sur GitHub
-- Contacter l'équipe de développement
-
----
-Développé avec ❤️ pour le projet "Mes Bonnes Adresses"
+- Web : `expo build:web` ou `expo export:web` puis héberger le dossier `web-build` sur un hébergeur (Netlify, Vercel...).
+- Mobile : pour distribution sur stores, générer builds natifs via EAS (Expo Application Services) ou `expo prebuild` + builds natifs.
+- Mettre à jour les règles Firebase en production (sécurité) et restreindre les domaines autorisés dans la console Firebase si besoin.
