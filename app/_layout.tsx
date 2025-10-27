@@ -6,6 +6,7 @@ import { useColorScheme } from '../hooks/use-color-scheme';
 import {useEffect} from "react";
 import {Platform} from "react-native";
 import {AuthProvider} from "../contexts/AuthContext";
+import {SafeAreaProvider, SafeAreaView} from "react-native-safe-area-context";
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -27,15 +28,19 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }}/>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-                <Stack.Screen name="address/[id]" options={{ presentation: 'modal' }}/>
-                <Stack.Screen name="address/create" options={{ presentation: 'modal' }}/>
-            </Stack>
-        </AuthProvider>
-    </ThemeProvider>
+      <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1 }}>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                  <AuthProvider>
+                      <Stack screenOptions={{ headerShown: false }}>
+                          <Stack.Screen name="(auth)" options={{ headerShown: false }}/>
+                          <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
+                          <Stack.Screen name="address/[id]" options={{ presentation: 'modal' }}/>
+                          <Stack.Screen name="address/create" options={{ presentation: 'modal' }}/>
+                      </Stack>
+                  </AuthProvider>
+              </ThemeProvider>
+          </SafeAreaView>
+      </SafeAreaProvider>
   );
 }

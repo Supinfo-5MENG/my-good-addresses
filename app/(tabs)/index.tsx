@@ -6,8 +6,6 @@ import { Address } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SIZES } from '../../constants';
 import {
-    getUserAddresses,
-    getPublicAddresses,
     subscribeToUserAddresses,
     subscribeToPublicAddresses,
 } from '../../services/firebase/addressService';
@@ -19,7 +17,6 @@ export default function MapScreen() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [showPublic, setShowPublic] = useState(true);
     const [showPrivate, setShowPrivate] = useState(true);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!user) return;
@@ -36,11 +33,9 @@ export default function MapScreen() {
                     updateAddresses(publicAddresses, 'public');
                 });
 
-                setLoading(false);
             } catch (error) {
                 console.error('Erreur lors du chargement des adresses:', error);
                 Alert.alert('Erreur', 'Impossible de charger les adresses');
-                setLoading(false);
             }
         };
 
@@ -57,7 +52,7 @@ export default function MapScreen() {
             let combined: Address[] = [];
             
             if (showPrivate) {
-                combined = [...allUserAddresses.filter(addr => !addr.isPublic)];
+                combined = allUserAddresses.filter(addr => !addr.isPublic);
             }
             
             if (showPublic) {
@@ -159,8 +154,7 @@ const styles = StyleSheet.create({
     },
     filterContainer: {
         position: 'absolute',
-        top: 50,
-        left: 20,
+        top: 10,
         right: 20,
         flexDirection: 'row',
         gap: 10,
