@@ -25,14 +25,12 @@ interface WebMapProps {
     };
     onMarkerPress?: (address: any) => void;
     onMapPress?: (coordinate: { latitude: number; longitude: number }) => void;
-    showUserLocation?: boolean;
 }
 
 const WebMap: React.FC<WebMapProps> = ({
                                            data,
                                            onMarkerPress,
                                            onMapPress,
-                                           showUserLocation,
                                        }) => {
     const iframeRef = useRef<any>(null);
 

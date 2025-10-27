@@ -1,24 +1,20 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    TouchableOpacity,
-    Image,
     ActivityIndicator,
+    FlatList,
     RefreshControl,
+    StyleSheet,
+    Text,
     TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Address } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
-import { COLORS, SIZES } from '../../constants';
-import {
-    getPublicAddresses,
-    subscribeToPublicAddresses,
-} from '../../services/firebase/addressService';
-import { Ionicons } from '@expo/vector-icons';
+import {useRouter} from 'expo-router';
+import {Address} from '../../types';
+import {useAuth} from '../../contexts/AuthContext';
+import {COLORS, SIZES} from '../../constants';
+import {getPublicAddresses, subscribeToPublicAddresses,} from '../../services/firebase/addressService';
+import {Ionicons} from '@expo/vector-icons';
 import {AddressMap} from "../../components/map/AddressMap";
 
 export default function PublicAddressesScreen() {

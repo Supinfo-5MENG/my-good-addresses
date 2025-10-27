@@ -12,7 +12,6 @@ import { Address } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 
 let MapComponent: any;
-let MarkerComponent: any;
 
 if (Platform.OS === 'web') {
     MapComponent = require('./WebMap').default;
@@ -26,7 +25,6 @@ interface AddressMapProps {
     onMapPress?: (coordinate: { latitude: number; longitude: number }) => void;
     showUserLocation?: boolean;
     selectedAddress?: Address | null;
-    height?: number;
 }
 
 export const AddressMap: React.FC<AddressMapProps> = ({

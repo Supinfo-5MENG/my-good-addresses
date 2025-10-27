@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    Image,
     Alert,
-    ActivityIndicator,
+    Image,
     KeyboardAvoidingView,
     Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
-import { COLORS, SIZES, MESSAGES } from '../../constants';
-import { Button, Input } from '../../components/common';
-import { Ionicons } from '@expo/vector-icons';
-import {pickImage, selectImageSource} from '../../utils/permissions';
-import { compressImageToSize } from '../../services/imageService';
+import {useRouter} from 'expo-router';
+import {useAuth} from '../../contexts/AuthContext';
+import {COLORS, SIZES} from '../../constants';
+import {Button, Input} from '../../components/common';
+import {Ionicons} from '@expo/vector-icons';
+import {pickImage} from '../../utils/permissions';
+import {compressImageToSize} from '../../services/imageService';
 
 export default function ProfileScreen() {
     const { user, signOut, updateUserProfile, changePassword } = useAuth();

@@ -1,19 +1,21 @@
-import { User } from "../types";
+import {User} from "../types";
 import {
     createUserWithEmailAndPassword,
+    EmailAuthProvider,
     onAuthStateChanged,
+    reauthenticateWithCredential,
     signInWithEmailAndPassword,
     signOut as firebaseSignOut,
-    updateProfile,
     updatePassword,
-    EmailAuthProvider,
-    reauthenticateWithCredential,
+    updateProfile,
     User as FirebaseUser
 } from 'firebase/auth';
-import {createContext, useCallback, useContext, useEffect, useMemo, useState, useRef, ReactNode} from "react";
-import { auth, db } from '../services/firebase/firebase';
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { COLLECTIONS } from "../constants";
+import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
+import {auth, db} from '../services/firebase/firebase';
+import {doc, getDoc, setDoc} from "firebase/firestore";
+import {COLLECTIONS} from "../constants";
+import firebase from "firebase/compat/app";
+import DocumentData = firebase.firestore.DocumentData;
 
 type AuthContextType = {
     user: User | null;
@@ -38,7 +40,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
             return;
         }
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        authSubscriptionRef.current = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
             console.log("Auth state changed:", firebaseUser?.uid || "null");
 
             try {
@@ -52,12 +54,12 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
                 const userRef = doc(db, COLLECTIONS.USERS, firebaseUser.uid);
                 const userSnap = await getDoc(userRef);
 
-                let userData;
+                let userData: DocumentData;
                 if (userSnap.exists()) {
                     userData = userSnap.data();
                 } else {
                     userData = {
-                        email: firebaseUser.email!,
+                        email: firebaseUser.email,
                         displayName: firebaseUser.displayName || null,
                         photoURL: firebaseUser.photoURL || null,
                         createdAt: new Date(),
@@ -79,7 +81,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
                 if (firebaseUser) {
                     setUser({
                         id: firebaseUser.uid,
-                        email: firebaseUser.email!,
+                        email: firebaseUser.email,
                         displayName: firebaseUser.displayName || undefined,
                         photoURL: firebaseUser.photoURL || undefined,
                         createdAt: new Date(),
@@ -90,8 +92,6 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
                 setIsInitialized(true);
             }
         });
-
-        authSubscriptionRef.current = unsubscribe;
 
         return () => {
             if (authSubscriptionRef.current) {

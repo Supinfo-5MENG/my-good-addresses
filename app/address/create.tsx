@@ -15,13 +15,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
-import { COLORS, SIZES, MAP_CONFIG, MESSAGES } from '../../constants';
+import { COLORS, SIZES, MESSAGES } from '../../constants';
 import { Button } from '../../components/common';
 import { useAuth } from '../../contexts/AuthContext';
 import { createAddress } from '../../services/firebase/addressService';
 import { CreateAddressInput, Address } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
-import {pickImage, selectImageSource} from '../../utils/permissions';
+import { pickImage } from '../../utils/permissions';
 import { compressImageToSize } from '../../services/imageService';
 import { AddressMap } from '../../components/map/AddressMap';
 
@@ -41,13 +41,6 @@ export default function CreateAddressScreen() {
         latitude: number;
         longitude: number;
     } | null>(null);
-
-    const [region, setRegion] = useState({
-        latitude: MAP_CONFIG.DEFAULT_LATITUDE,
-        longitude: MAP_CONFIG.DEFAULT_LONGITUDE,
-        latitudeDelta: MAP_CONFIG.DEFAULT_DELTA,
-        longitudeDelta: MAP_CONFIG.DEFAULT_DELTA,
-    });
 
     useEffect(() => {
         getCurrentLocation();
@@ -70,14 +63,6 @@ export default function CreateAddressScreen() {
                 accuracy: Location.Accuracy.Balanced,
             });
 
-            const newRegion = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            };
-
-            setRegion(newRegion);
             setSelectedLocation({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,

@@ -16,12 +16,6 @@ export default function Index() {
 
         const firstSegment = segments[0];
         const inAuthGroup = firstSegment === "(auth)";
-        const inTabsGroup = firstSegment === "(tabs)";
-
-        // TODO Besoin d'une double authentification quand on vient de se déconnecter
-        // Le user est à false lors de la première connexion et true à la seconde
-        // Il y a surement un soucis au niveau de l'écoute de la réponse de firebase
-        console.log({ segments, inAuthGroup, inTabsGroup, user: !!user });
 
         if (!user && !inAuthGroup) {
             router.replace("/login");

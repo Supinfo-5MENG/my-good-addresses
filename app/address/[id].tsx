@@ -1,36 +1,29 @@
-import { useState, useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Image,
-    TextInput,
     ActivityIndicator,
     Alert,
     FlatList,
+    Image,
     KeyboardAvoidingView,
     Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS, SIZES, MESSAGES } from '../../constants';
-import { Address, Comment } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
-import {
-    getAddress,
-    deleteAddress,
-} from '../../services/firebase/addressService';
-import {
-    createComment,
-    deleteComment,
-    subscribeToAddressComments,
-} from '../../services/firebase/commentService';
-import { Ionicons } from '@expo/vector-icons';
-import { Button } from '../../components/common';
-import {pickImage, selectImageSource} from '../../utils/permissions';
-import { AddressMap } from '../../components/map/AddressMap';
-import { convertMultipleImagesToBase64 } from '../../services/imageService';
+import {useLocalSearchParams, useRouter} from 'expo-router';
+import {COLORS, MESSAGES, SIZES} from '../../constants';
+import {Address, Comment} from '../../types';
+import {useAuth} from '../../contexts/AuthContext';
+import {deleteAddress, getAddress,} from '../../services/firebase/addressService';
+import {createComment, deleteComment, subscribeToAddressComments,} from '../../services/firebase/commentService';
+import {Ionicons} from '@expo/vector-icons';
+import {Button} from '../../components/common';
+import {pickImage} from '../../utils/permissions';
+import {AddressMap} from '../../components/map/AddressMap';
+import {convertMultipleImagesToBase64} from '../../services/imageService';
 
 export default function AddressDetailScreen() {
     const { id } = useLocalSearchParams();

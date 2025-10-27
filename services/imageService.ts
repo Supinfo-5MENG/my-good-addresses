@@ -72,7 +72,7 @@ export const compressImageToSize = async (
         console.log(`Tentative ${attempts + 1}: ${currentSize}KB (q:${quality}, w:${width})`);
 
         if (currentSize <= maxSizeKB) {
-            console.log(`✅ Compression réussie: ${currentSize}KB`);
+            console.log(`Compression réussie: ${currentSize}KB`);
             return base64Image;
         }
 
