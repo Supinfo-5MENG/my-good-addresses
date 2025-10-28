@@ -17,7 +17,6 @@ Application mobile / web pour partager, sauvegarder et découvrir des adresses (
 - [Tests](#tests)
     - [Tests unitaires / d'intégration (Jest)](#tests-unitaires--composants-jest)
     - [Tests E2E (Detox)](#tests-e2e-detox)
-- [Storybook](#storybook)
 - [Règles Firebase](#règles-firebase)
 - [Architecture / Composants clés](#architecture--composants-clés)
     - [Auth (AuthContext)](#authcontext-contextsauthcontexttsx)
@@ -45,7 +44,6 @@ My Good Addresses permet aux utilisateurs d'ajouter des adresses (avec photo et 
 - Commentaires avec images
 - Règles de sécurité Firebase pour Firestore & Storage
 - Tests unitaires et E2E (Jest, Detox)
-- Storybook pour composants UI
 
 ## Stack technique
 
@@ -53,29 +51,28 @@ My Good Addresses permet aux utilisateurs d'ajouter des adresses (avec photo et 
 - Backend-as-a-service : Firebase (Authentication, Firestore, Storage)
 - Cartes : Leaflet (via WebView pour mobile et iframe pour web)
 - Tests : Jest (jest-expo), @testing-library/react-native, Detox (E2E)
-- Storybook : @storybook/react-native
 - Outils : TypeScript, ESLint
 
 ## Organisation du dépôt
 
-- app/ — pages / routes (expo-router)
+- app/ - pages / routes (expo-router)
     - (auth)/login.tsx, register.tsx
     - (tabs)/index.tsx, my-addresses.tsx, public-addresses.tsx, profile.tsx
     - address/[id].tsx, address/create.tsx
 - components/
-    - common/ — Button, Input, etc.
-    - map/ — AddressMap, MobileMap, WebMap
+    - common/ - Button, Input, etc.
+    - map/ - AddressMap, MobileMap, WebMap
     - haptic-tab.tsx
-- contexts/ — AuthContext.tsx
+- contexts/ - AuthContext.tsx
 - services/
-    - firebase/ — firebase.ts, addressService.ts, commentService.ts
+    - firebase/ - firebase.ts, addressService.ts, commentService.ts
     - imageService.ts
-- constants/ — index.ts, theme.ts
-- firebase/ — firestore.rules, storage.rules
-- utils/ — permissions.ts
-- types/ — types/index.ts
-- __tests__/ — tests unitaires
-- e2e/ — tests Detox
+- constants/ - index.ts, theme.ts
+- firebase/ - firestore.rules, storage.rules
+- utils/ - permissions.ts
+- types/ - types/index.ts
+- __tests__/ - tests unitaires
+- e2e/ - tests Detox
 
 ## Installation & configuration
 
@@ -91,7 +88,7 @@ My Good Addresses permet aux utilisateurs d'ajouter des adresses (avec photo et 
 
 Copiez `.env.example` en `.env` ou configurez les variables d'environnement utilisées dans `services/firebase/firebase.ts`. Les noms exposés (ex : EXPO_PUBLIC_API_KEY, EXPO_PUBLIC_AUTH_DOMAIN...) sont attendus par le code.
 
-Exemple (.env) — variables attendues :
+Exemple (.env) - variables attendues :
 - EXPO_PUBLIC_API_KEY
 - EXPO_PUBLIC_AUTH_DOMAIN
 - EXPO_PUBLIC_PROJECT_ID
@@ -141,13 +138,6 @@ Les tests utilisent `jest-expo` comme preset et `@testing-library/react-native`.
     - npm run test:e2e
 
 Detox nécessite des configurations supplémentaires (simulators, builds natives). Vérifier la documentation Detox et les configurations CI pour l'exécution.
-
-## Storybook
-
-- Lancer Storybook :
-    - npm run storybook
-
-Permet d'inspecter les composants UI (`components/common`).
 
 ## Règles Firebase
 

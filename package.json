@@ -12,7 +12,6 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "storybook": "storybook start",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -54,9 +53,6 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@playwright/test": "^1.48.0",
-    "@storybook/addon-ondevice-actions": "^8.4.7",
-    "@storybook/addon-ondevice-controls": "^8.4.7",
-    "@storybook/react-native": "^8.4.7",
     "@testing-library/jest-native": "^5.4.2",
     "@testing-library/react-native": "^12.4.0",
     "@types/jest": "^29.5.11",
