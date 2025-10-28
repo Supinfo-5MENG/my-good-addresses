@@ -1,5 +1,10 @@
 # My Good Addresses
 
+## Membres du groupe
+
+- Honore Clément
+- Bosquet Ewen
+
 Application mobile / web pour partager, sauvegarder et découvrir des adresses (restaurants, lieux, points d'intérêt). Projet basé sur Expo + React Native + Firebase et pensé pour être multi-plateforme (iOS / Android / Web).
 
 ## Table des matières
@@ -14,9 +19,7 @@ Application mobile / web pour partager, sauvegarder et découvrir des adresses (
 - [Lancement en développement](#lancement-en-développement)
     - [Mobile (Expo)](#mobile-expo-go)
     - [Web](#web)
-- [Tests](#tests)
-    - [Tests unitaires / d'intégration (Jest)](#tests-unitaires--composants-jest)
-    - [Tests E2E (Detox)](#tests-e2e-detox)
+- [Tests unitaires / composants (Jest) / Detox](#tests-unitaires--composants-jest--detox)
 - [Règles Firebase](#règles-firebase)
 - [Architecture / Composants clés](#architecture--composants-clés)
     - [Auth (AuthContext)](#authcontext-contextsauthcontexttsx)
@@ -25,6 +28,9 @@ Application mobile / web pour partager, sauvegarder et découvrir des adresses (
     - [Composants UI](#composants-ui)
     - [Images & Optimisations](#images--optimisation)
 - [Modèles de données (types)](#modèles-de-données-types)
+  - [User](#user)
+  - [Address](#address)
+  - [Comment](#comment)
 - [Bonnes pratiques](#bonnes-pratiques)
 - [Déploiement rapide (notes)](#déploiement)
 
@@ -71,7 +77,7 @@ My Good Addresses permet aux utilisateurs d'ajouter des adresses (avec photo et 
 - firebase/ - firestore.rules, storage.rules
 - utils/ - permissions.ts
 - types/ - types/index.ts
-- __tests__/ - tests unitaires
+- \_\_tests__/ - tests unitaires
 - e2e/ - tests Detox
 
 ## Installation & configuration
@@ -97,7 +103,7 @@ Exemple (.env) - variables attendues :
 - EXPO_PUBLIC_APP_ID
 - EXPO_PUBLIC_MEASUREMENT_ID (optionnel)
 
-> Le fichier `.env.example` fournit un exemple fonctionnel avec des données déjà intégrées. Ne committez pas vos clés privées.
+> Le fichier `.env.example` fournit un exemple fonctionnel avec des données déjà intégrées.
 
 ## Lancement en développement
 
@@ -120,24 +126,15 @@ Exemple (.env) - variables attendues :
 - npm run web
 - L'application s'exécute dans le navigateur (WebMap utilise iframe/Leaflet).
 
-## Tests
+## Tests unitaires / composants (Jest) / Detox
 
-### Tests unitaires / composants (Jest)
-
+- Configuration Detox : voir `package.json` (script `test`).
 - Lancer tous les tests :
     - npm run test
 - Lancer en mode watch :
     - npm run test:watch
 
 Les tests utilisent `jest-expo` comme preset et `@testing-library/react-native`.
-
-### Tests E2E (Detox)
-
-- Configuration Detox : voir `package.json` (script `test:e2e`).
-- Exemple :
-    - npm run test:e2e
-
-Detox nécessite des configurations supplémentaires (simulators, builds natives). Vérifier la documentation Detox et les configurations CI pour l'exécution.
 
 ## Règles Firebase
 
@@ -195,23 +192,52 @@ Vérifiez et adaptez les règles à vos besoins de production (ex : vérificatio
 
 Fichier : `types/index.ts`
 
-Principaux type:
-- User
-    - id, email, displayName?, photoURL?, createdAt: Date
+### User
 
-- Address
-    - id, userId, name, description, photoURL?, location (latitude, longitude), isPublic (bool), createdAt, updatedAt
+| Champ          | Type     | Description                             |
+|----------------|----------|-----------------------------------------|
+| `id`           | `string` | Identifiant unique de l’utilisateur     |
+| `email`        | `string` | Adresse e-mail                          |
+| `displayName?` | `string` | Nom affiché *(optionnel)*               |
+| `photoURL?`    | `string` | URL de la photo de profil *(optionnel)* |
+| `createdAt`    | `Date`   | Date de création du compte              |
 
-- Comment
-    - id, addressId, userId, userDisplayName?, userPhotoURL?, text, photos[], createdAt
+---
+
+### Address
+
+| Champ         | Type                                      | Description                            |
+|---------------|-------------------------------------------|----------------------------------------|
+| `id`          | `string`                                  | Identifiant unique de l’adresse        |
+| `userId`      | `string`                                  | Référence à l’utilisateur propriétaire |
+| `name`        | `string`                                  | Nom de l’adresse                       |
+| `description` | `string`                                  | Description ou détails                 |
+| `photoURL?`   | `string`                                  | Photo associée *(optionnelle)*         |
+| `location`    | `{ latitude: number, longitude: number }` | Coordonnées géographiques              |
+| `isPublic`    | `boolean`                                 | Indique si l’adresse est publique      |
+| `createdAt`   | `Date`                                    | Date de création                       |
+| `updatedAt`   | `Date`                                    | Dernière mise à jour                   |
+
+---
+
+### Comment
+
+| Champ              | Type       | Description                                 |
+|--------------------|------------|---------------------------------------------|
+| `id`               | `string`   | Identifiant du commentaire                  |
+| `addressId`        | `string`   | Référence à l’adresse commentée             |
+| `userId`           | `string`   | Référence à l’auteur du commentaire         |
+| `userDisplayName?` | `string`   | Nom affiché de l’auteur *(optionnel)*       |
+| `userPhotoURL?`    | `string`   | Photo de profil de l’auteur *(optionnelle)* |
+| `text`             | `string`   | Contenu du commentaire                      |
+| `photos[]`         | `string[]` | Liste d’URLs de photos *(optionnelles)*     |
+| `createdAt`        | `Date`     | Date de création du commentaire             |
 
 ## Bonnes pratiques
 
-- Ne pas stocker d'images brutes non optimisées : utiliser `imageService.compressImageToSize`.
-- Vérifier les permissions avant d'utiliser la localisation / caméra / galerie (utils/permissions).
-- Pour la carte mobile, la communication entre WebView et RN peut être sensible : logger les messages postés pour debug.
-- Si l'authentification ne synchronise pas l'utilisateur, vérifier les variables Firebase dans `.env` et les règles Firestore.
-- Pour debugging Firebase : activer la console et vérifier les requêtes échouées (erreurs de règles, permissions).
+- On évite de stocker des images brutes non optimisées : on passe toujours par `imageService.compressImageToSize`.
+- On pense à vérifier les permissions avant d’utiliser la localisation, la caméra ou la galerie (`utils/permissions`).
+- Pour la carte mobile, la communication entre la WebView et React Native peut parfois être capricieuse : on log les messages échangés pour faciliter le debug.
 
 ## Déploiement
 
