@@ -13,7 +13,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "storybook": "storybook start",
-    "test:e2e": "detox test --configuration ios"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@playwright/test": "^1.48.0",
     "@storybook/addon-ondevice-actions": "^8.4.7",
     "@storybook/addon-ondevice-controls": "^8.4.7",
     "@storybook/react-native": "^8.4.7",

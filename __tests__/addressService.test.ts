@@ -21,7 +21,6 @@ import {
 } from 'firebase/firestore';
 import { CreateAddressInput, UpdateAddressInput } from '../types';
 
-// Mock Firebase modules
 jest.mock('firebase/firestore', () => {
     const actualFirestore = jest.requireActual('firebase/firestore');
     return {

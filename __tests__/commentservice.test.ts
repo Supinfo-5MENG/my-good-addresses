@@ -18,7 +18,6 @@ import {
 } from 'firebase/firestore';
 import { CreateCommentInput } from '../types';
 
-// Mock Firebase modules
 jest.mock('firebase/firestore', () => {
     const actualFirestore = jest.requireActual('firebase/firestore');
     return {
@@ -243,7 +242,6 @@ describe('Comment Service Tests', () => {
                     userId: 'user1',
                     text: 'Sans photo',
                     createdAt: { toDate: () => new Date('2024-01-01') },
-                    // pas de champ photos
                 },
             ];
 
