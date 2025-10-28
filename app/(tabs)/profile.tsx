@@ -93,6 +93,11 @@ export default function ProfileScreen() {
     };
 
     const handleSignOut = () => {
+        if (Platform.OS === 'web') {
+            signOut().then(() => router.replace('/login'))
+            return
+        }
+
         Alert.alert(
             'Déconnexion',
             'Êtes-vous sûr de vouloir vous déconnecter ?',
