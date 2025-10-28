@@ -98,9 +98,9 @@ Exemple (.env) — variables attendues :
 - EXPO_PUBLIC_STORAGE_BUCKET
 - EXPO_PUBLIC_MESSAGING_SENDER_ID
 - EXPO_PUBLIC_APP_ID
-- EXPO_PUBLIC_MEASUREMENT_ID
+- EXPO_PUBLIC_MEASUREMENT_ID (optionnel)
 
-> Le fichier `.env.example` fournit un modèle. Ne committez pas vos clés privées.
+> Le fichier `.env.example` fournit un exemple fonctionnel avec des données déjà intégrées. Ne committez pas vos clés privées.
 
 ## Lancement en développement
 
