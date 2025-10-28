@@ -1,11 +1,11 @@
 # My Good Addresses
 
+Application mobile / web pour partager, sauvegarder et découvrir des adresses (restaurants, lieux, points d'intérêt). Projet basé sur Expo + React Native + Firebase et pensé pour être multi-plateforme (iOS / Android / Web).
+
 ## Membres du groupe
 
 - Honore Clément
 - Bosquet Ewen
-
-Application mobile / web pour partager, sauvegarder et découvrir des adresses (restaurants, lieux, points d'intérêt). Projet basé sur Expo + React Native + Firebase et pensé pour être multi-plateforme (iOS / Android / Web).
 
 ## Table des matières
 
@@ -107,13 +107,9 @@ Exemple (.env) - variables attendues :
 
 ## Lancement en développement
 
-1. Installer les dépendances
-    - npm install
-    - ou yarn
+1. Installer les dépendances : **npm install**
 
-2. Démarrer Expo
-    - npm run start
-    - ou yarn start
+2. Démarrer Expo : **npm run start**
 
 ### Mobile (Expo Go)
 - Lancez `expo start` puis scannez le QR code avec Expo Go.
