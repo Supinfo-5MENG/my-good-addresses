@@ -1,4 +1,5 @@
 import '@testing-library/jest-native/extend-expect';
+import {Alert} from "react-native";
 
 const originalError = console.error;
 beforeAll(() => {
@@ -19,7 +20,7 @@ afterAll(() => {
     console.error = originalError;
 });
 
-jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 
 jest.mock('expo-router', () => ({
     useRouter: jest.fn(),
@@ -56,9 +57,7 @@ jest.mock('expo-haptics', () => ({
     },
 }));
 
-jest.mock('react-native/Libraries/Alert/Alert', () => ({
-    alert: jest.fn(),
-}));
+Alert.alert = jest.fn();
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
     setItem: jest.fn(),
