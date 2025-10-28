@@ -107,9 +107,9 @@ Exemple (.env) - variables attendues :
 
 ## Lancement en développement
 
-1. Installer les dépendances : **npm install**
-
-2. Démarrer Expo : **npm run start**
+1. Préparez le fichier `.env`
+2. Installer les dépendances : **npm install**
+3. Démarrer Expo : **npm run start**
 
 ### Mobile (Expo Go)
 - Lancez `expo start` puis scannez le QR code avec Expo Go.
@@ -131,6 +131,10 @@ Exemple (.env) - variables attendues :
     - npm run test:watch
 
 Les tests utilisent `jest-expo` comme preset et `@testing-library/react-native`.
+
+### Résultats
+
+![tests_result](./img/tests_result.png)
 
 ## Règles Firebase
 
